@@ -17,6 +17,8 @@
 
     <PublishRepositoryUrl>true</PublishRepositoryUrl>
     <IncludeBuildOutput>false</IncludeBuildOutput>
+
+    <PackageId>CSFML.Gaiden</PackageId>
   </PropertyGroup>
 
   <ItemGroup>
@@ -25,7 +27,7 @@
 
   <PropertyGroup>
     <Description>This package contains the native libraries for the C port of SFML, used as a dependency for SFML.Net</Description>
-    <Title>CSFML.Gaiden</Title>
+    <Title>CSFML</Title>
   </PropertyGroup>
 
   <ItemGroup>
