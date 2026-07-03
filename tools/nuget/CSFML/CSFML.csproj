@@ -1,17 +1,17 @@
 <Project Sdk="Microsoft.NET.Sdk" ToolsVersion="16.0">
 
   <PropertyGroup>
-    <TargetFramework>netstandard2.0</TargetFramework>
+    <TargetFramework>net10.0</TargetFramework>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
 
-    <Version>3.0.0</Version>
-    <Authors>Laurent Gomila</Authors>
+    <Version>100.0.0</Version>
+    <Authors>Wh1teDuke</Authors>
     <PackageTags>sfml csfml</PackageTags>
     <Copyright>Copyright © Laurent Gomila</Copyright>
 
     <PackageLicenseExpression>Zlib</PackageLicenseExpression>
-    <PackageProjectUrl>https://www.sfml-dev.org/</PackageProjectUrl>
-    <PackageIconUrl>https://www.sfml-dev.org/images/sfml-icon.png</PackageIconUrl>
+    <PackageProjectUrl>https://github.com/Wh1teDuke/CSFML.Gaiden</PackageProjectUrl>
+    <PackageIconUrl>https://github.com/Wh1teDuke/CSFML.Gaiden</PackageIconUrl>
     <PackageIcon>sfml-icon.png</PackageIcon>
     <PackageReadmeFile>readme.md</PackageReadmeFile>
 
