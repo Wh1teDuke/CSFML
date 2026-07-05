@@ -19,6 +19,8 @@
     <IncludeBuildOutput>false</IncludeBuildOutput>
 
     <PackageId>CSFML.Gaiden</PackageId>
+
+    <CSFMLIgnoreAnyCPU>false</CSFMLIgnoreAnyCPU>
   </PropertyGroup>
 
   <ItemGroup>
@@ -32,7 +34,6 @@
 
   <ItemGroup>
     <None Pack="True" Include="runtimes/**" PackagePath="runtimes" />
-    <None Pack="True" Include="build/**" PackagePath="build" />
     <None Pack="True" Include="sfml-icon.png" PackagePath="/" />
     <None Pack="True" Include="readme.md" PackagePath="/" />
   </ItemGroup>
