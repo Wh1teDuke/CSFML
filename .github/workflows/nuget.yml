@@ -1,12 +1,6 @@
 name: NuGet Release
 
-on:
-  push:
-    branches:
-      - gaiden
-    tags:
-      - "**"
-  workflow_dispatch: {}
+on: [workflow_dispatch]
 
 concurrency:
   group: nuget-${{github.ref}}
