@@ -20,9 +20,13 @@ RID="$1"
 SFMLBranch="3.1.0" # The branch or tag of the SFML repository to be cloned
 CSFMLDir="$(grealpath "$(git rev-parse --show-toplevel)")" # The directory of the source code of CSFML
 
-OutDir="./CSFML/runtimes/$RID/native" # The base directory of all CSFML modules, used to copy the final libraries
-mkdir -p "$OutDir"
-OutDir="$(grealpath "$OutDir")"
+OutDirShared="./CSFML/runtimes/$RID/native" # The base directory of all CSFML modules, used to copy the final libraries
+mkdir -p "$OutDirShared"
+OutDirShared="$(grealpath "$OutDirShared")"
+
+OutDirStatic="./CSFML/libs/$RID/static"
+mkdir -p "$OutDirStatic"
+OutDirStatic="$(realpath "$OutDirStatic")"
 
 echo "Building $RID"
 
@@ -145,10 +149,11 @@ copymodule()
 {
     MODULE="$1"
 
-    mkdir -p "$OutDir"
+    mkdir -p "$OutDirShared"
+    mkdir -p "$OutDirStatic"
 
-    cp "$CSFMLLibDir/libcsfml-$MODULE.dylib" "$OutDir"
-    cp "$CSFMLLibDir"/libcsfml-$MODULE*.a "$OutDir"
+    cp "$CSFMLLibDir/libcsfml-$MODULE.dylib" "$OutDirShared"
+    cp "$CSFMLLibDir"/libcsfml-$MODULE*.a "$OutDirStatic"
 }
 
 copymodule audio

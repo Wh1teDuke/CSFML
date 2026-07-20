@@ -4,7 +4,7 @@
     <TargetFramework>net10.0</TargetFramework>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
 
-    <Version>100.1.0-alpha-5</Version>
+    <Version>100.1.0-alpha-6</Version>
     <Authors>Wh1teDuke</Authors>
     <PackageTags>sfml csfml</PackageTags>
     <Copyright>Copyright © Laurent Gomila</Copyright>
@@ -34,6 +34,8 @@
 
   <ItemGroup>
     <None Pack="True" Include="runtimes/**" PackagePath="runtimes" />
+    <None Pack="True" Include="libs/**" PackagePath="libs" />
+
     <None Pack="True" Include="sfml-icon.png" PackagePath="/" />
     <None Pack="True" Include="readme.md" PackagePath="/" />
   </ItemGroup>

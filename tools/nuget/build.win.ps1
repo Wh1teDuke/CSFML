@@ -46,9 +46,13 @@ Write-Output "Using architecture $ArchitectureCMake"
 $SFMLBranch = "3.1.0" # The branch or tag of the SFML repository to be cloned
 $CSFMLDir = (Get-Item (git rev-parse --show-toplevel)).FullName # The directory of the source code of CSFML
 
-$OutDir = "./CSFML/runtimes/$RID/native" # The directory of all CSFML modules, used to copy the final dlls
-New-Item -ItemType Directory -ErrorAction Ignore $OutDir > $null
-$OutDir = (Get-Item $OutDir).FullName
+$OutDirShared = "./CSFML/runtimes/$RID/native" # The directory of all CSFML modules, used to copy the final dlls
+New-Item -ItemType Directory -ErrorAction Ignore $OutDirShared > $null
+$OutDirShared = (Get-Item $OutDirShared).FullName
+
+$OutDirStatic = "./CSFML/libs/$RID/static"
+New-Item -ItemType Directory -ErrorAction Ignore $OutDirStatic > $null
+$OutDirStatic = (Get-Item $OutDirStatic).FullName
 
 <#
 .SYNOPSIS
@@ -206,7 +210,7 @@ Copies a specific SFML & CSFML module into its proper NuGet project
 
 .DESCRIPTION
 This function locates a file named csfml-(module)-3.dll inside of the
-folder specified by $CSFMLLibDir and copies it to $OutDir/csfml-(module).dll.
+folder specified by $CSFMLLibDir and copies it to $OutDirShared/csfml-(module).dll.
 
 Notice how it removes the "-3" at the end, to make the name compatible with other platforms.
 
@@ -218,9 +222,11 @@ The case-insensitive name of the module to copy.
 function Copy-Module($module) {
     Write-Output "Copying SFML & CSFML $module"
 
-    New-Item -ItemType Directory $OutDir -ErrorAction Ignore > $null
-    Copy-Item "$CSFMLLibDir/csfml-$module-3.dll" "$OutDir/csfml-$module.dll" -Force > $null
-    Copy-Item "$CSFMLLibDir/csfml-$module-s.lib" "$OutDir/csfml-$module-s.lib" -Force > $null
+    New-Item -ItemType Directory $OutDirShared -ErrorAction Ignore > $null
+    New-Item -ItemType Directory $OutDirStatic -ErrorAction Ignore > $null
+
+    Copy-Item "$CSFMLLibDir/csfml-$module-3.dll" "$OutDirShared/csfml-$module.dll" -Force > $null
+    Copy-Item "$CSFMLLibDir/csfml-$module-s.lib" "$OutDirStatic/csfml-$module-s.lib" -Force > $null
 }
 
 Copy-Module 'audio'
@@ -280,7 +286,7 @@ function Get-BinaryDependencies {
 }
 
 # Process binaries
-Get-ChildItem $OutDir -Filter *.dll | ForEach-Object {
+Get-ChildItem $OutDirShared -Filter *.dll | ForEach-Object {
     $dll = $_.FullName
     Write-Host "Checking dependencies for $dll"
 
@@ -289,7 +295,7 @@ Get-ChildItem $OutDir -Filter *.dll | ForEach-Object {
         if ($redistributableDlls -contains $dep) {
             $source = Get-ChildItem -Path $redistCRT -Recurse -Filter $dep | Select-Object -First 1
             if ($source) {
-                Copy-Item $source.FullName -Destination $OutDir -Force
+                Copy-Item $source.FullName -Destination $OutDirShared -Force
                 Write-Host " -> Copied $dep from $($source.DirectoryName)"
             }
         }
