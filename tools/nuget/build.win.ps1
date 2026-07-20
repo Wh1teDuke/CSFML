@@ -141,6 +141,7 @@ New-Push CSFML
 New-Item -ItemType Directory lib > $null
 $CSFMLLibDir = (Get-Item lib).FullName; # The directory where the final CSFML dlls are located
 
+# Shared
 cmake `
     "-DSFML_ROOT=$SFMLInstallDir" `
     '-DCSFML_LINK_SFML_STATICALLY=ON' `
@@ -164,6 +165,29 @@ cmake `
     "-G$generator" `
     "-A$ArchitectureCMake" `
     `
+    $CSFMLDir
+Ensure-Success
+
+cmake --build . --config Release -- '-verbosity:minimal'
+Ensure-Success
+
+# Static
+cmake `
+    "-DSFML_ROOT=$SFMLInstallDir" `
+    '-DCSFML_LINK_SFML_STATICALLY=ON' `
+    "-DCMAKE_LIBRARY_OUTPUT_DIRECTORY=$CSFMLLibDir" `
+    "-DCMAKE_LIBRARY_OUTPUT_DIRECTORY_RELEASE=$CSFMLLibDir" `
+    "-DCMAKE_ARCHIVE_OUTPUT_DIRECTORY=$CSFMLLibDir" `
+    "-DCMAKE_ARCHIVE_OUTPUT_DIRECTORY_RELEASE=$CSFMLLibDir" `
+    "-DCMAKE_RUNTIME_OUTPUT_DIRECTORY=$CSFMLLibDir" `
+    "-DCMAKE_RUNTIME_OUTPUT_DIRECTORY_RELEASE=$CSFMLLibDir" `
+    '-DCMAKE_SYSTEM_VERSION=8.1' `
+    '-DCSFML_USE_STATIC_STD_LIBS=OFF' `
+    '-DBUILD_SHARED_LIBS=OFF' `
+    '-DCMAKE_BUILD_TYPE=Release' `
+    '-DCSFML_BUILD_NETWORK=OFF' `
+    "-G$generator" `
+    "-A$ArchitectureCMake" `
     $CSFMLDir
 Ensure-Success
 
@@ -196,6 +220,7 @@ function Copy-Module($module) {
 
     New-Item -ItemType Directory $OutDir -ErrorAction Ignore > $null
     Copy-Item "$CSFMLLibDir/csfml-$module-3.dll" "$OutDir/csfml-$module.dll" -Force > $null
+    Copy-Item "$CSFMLLibDir/csfml-$module-s.lib" "$OutDir/csfml-$module-s.lib" -Force > $null
 }
 
 Copy-Module 'audio'

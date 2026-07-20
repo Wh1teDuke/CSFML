@@ -103,6 +103,7 @@ pushd CSFML
 mkdir -p lib
 CSFMLLibDir="$(realpath lib)" # The directory that contains the final CSFML libraries. Used to copy the result into SFML.Net
 
+# Shared lib
 cmake -E env LDFLAGS="-z origin" \
     cmake "${CMAKE_COMPILER_ARGS[@]}" \
     "-DSFML_ROOT=$SFMLLibDir" \
@@ -116,24 +117,33 @@ cmake -E env LDFLAGS="-z origin" \
     "$CSFMLDir"
 cmake --build . --config Release
 
+# Static lib
+cmake -E env LDFLAGS="-z origin" \
+    cmake "${CMAKE_COMPILER_ARGS[@]}" \
+    "-DSFML_ROOT=$SFMLLibDir" \
+    '-DBUILD_SHARED_LIBS=OFF' \
+    '-DCSFML_LINK_SFML_STATICALLY=ON' \
+    '-DCMAKE_BUILD_TYPE=Release' \
+    "-DCMAKE_LIBRARY_OUTPUT_DIRECTORY=$CSFMLLibDir" \
+    "-DCMAKE_ARCHIVE_OUTPUT_DIRECTORY=$CSFMLLibDir" \
+    '-DCMAKE_BUILD_WITH_INSTALL_RPATH=ON' \
+    '-DCMAKE_INSTALL_RPATH=$ORIGIN' \
+    '-DCSFML_BUILD_NETWORK=OFF' \
+    "$CSFMLDir"
+cmake --build . --config Release
+
 # ======================================== #
 # STEP 5: Copy result to the NuGet folders #
 # ======================================== #
 
-CSFMLMajorMinor="3.1"
-
-# Copies one SFML and CSFML module into the NuGet package
-# The module name must be passed to this function as an argument, in lowercase
-# This function then copies $CSFMLLibDir/libcsfml-(module).so into $OutDir
 copymodule()
 {
     MODULE="$1"
 
     mkdir -p "$OutDir"
 
-    # SFML.Net only searches for the name with common pre- and suffixes
-    # As such we need to ship e.g. libcsfml-graphics.so
     cp "$CSFMLLibDir/libcsfml-$MODULE.so" "$OutDir"
+    cp "$CSFMLLibDir"/libcsfml-$MODULE*.a "$OutDir"
 }
 
 copymodule audio

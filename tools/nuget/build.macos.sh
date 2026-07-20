@@ -101,6 +101,7 @@ pushd CSFML
 mkdir -p lib
 CSFMLLibDir="$(realpath lib)" # The directory that contains the final CSFML libraries. Used to copy the result into SFML.Net
 
+# Shared
 cmake -E env \
     cmake -G "Unix Makefiles" \
           -D "SFML_ROOT=$SFMLLibDir" \
@@ -117,25 +118,37 @@ cmake -E env \
           "$CSFMLDir"
 cmake --build . --config Release --target install
 
+# Static
+cmake -E env \
+    cmake -G "Unix Makefiles" \
+          -D "SFML_ROOT=$SFMLLibDir" \
+          -D 'BUILD_SHARED_LIBS=OFF' \
+          -D 'CSFML_LINK_SFML_STATICALLY=ON' \
+          -D 'CMAKE_BUILD_TYPE=Release' \
+          -D "CMAKE_OSX_ARCHITECTURES=$ARCHITECTURE" \
+          -D "CMAKE_LIBRARY_OUTPUT_DIRECTORY=$CSFMLLibDir" \
+          -D "CMAKE_ARCHIVE_OUTPUT_DIRECTORY=$CSFMLLibDir" \
+          -D 'CMAKE_BUILD_WITH_INSTALL_RPATH=ON' \
+          -D 'CMAKE_INSTALL_RPATH=@loader_path' \
+          -D "CMAKE_INSTALL_PREFIX=$CSFMLLibDir" \
+          -D "INSTALL_MISC_DIR=$CSFMLLibDir" \
+          -D "CSFML_BUILD_NETWORK=0" \
+          "$CSFMLDir"
+cmake --build . --config Release --target install
+
 # ======================================== #
 # STEP 5: Copy result to the NuGet folders #
 # ======================================== #
 
-CSFMLMajorMinor="3.1"
-CSFMLMajorMinorPatch="$CSFMLMajorMinor.0"
 
-# Copies one SFML and CSFML module into the NuGet package
-# The module name must be passed to this function as an argument, in lowercase
-# This function then copies $CSFMLLibDir/libcsfml-(module).so into $OutDir
 copymodule()
 {
     MODULE="$1"
 
     mkdir -p "$OutDir"
 
-    # SFML.Net only searches for the name with common pre- and suffixes
-    # As such we need to ship e.g. libcsfml-graphics.dylib
     cp "$CSFMLLibDir/libcsfml-$MODULE.dylib" "$OutDir"
+    cp "$CSFMLLibDir"/libcsfml-$MODULE*.a "$OutDir"
 }
 
 copymodule audio
