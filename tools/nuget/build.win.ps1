@@ -111,10 +111,36 @@ New-Push "$RID"
 
 
 Write-Output "Building SFML"
-New-Push SFML
+
+# Shared
+New-Push SFML-Shared
 
 $SFMLBuiltDir = Get-Location # The directory where SFML was built to. Used later to direct cmake when building CSFML
-$SFMLInstallDir = Join-Path -Path $SFMLBuiltDir -ChildPath 'install'
+$SFMLInstallDirShared = Join-Path -Path $SFMLBuiltDir -ChildPath 'install'
+
+cmake `
+    '-DBUILD_SHARED_LIBS=ON' `
+    '-DCMAKE_BUILD_TYPE=Release' `
+    '-DCMAKE_SYSTEM_VERSION=8.1' `
+    '-DSFML_USE_STATIC_STD_LIBS=OFF' `
+    '-DSFML_BUILD_NETWORK=OFF' `
+    "-DCMAKE_INSTALL_PREFIX=$SFMLInstallDirShared" `
+    "-DCMAKE_POLICY_VERSION_MINIMUM=3.5" `
+    "-G$Generator" `
+    "-A$ArchitectureCMake" `
+    $SFMLDir
+Ensure-Success
+
+cmake --build . --config Release --target install -- '-verbosity:minimal'
+Ensure-Success
+
+Pop-Location # Pop SFML
+
+# Static
+New-Push SFML-Static
+
+$SFMLBuiltDir = Get-Location # The directory where SFML was built to. Used later to direct cmake when building CSFML
+$SFMLInstallDirStatic = Join-Path -Path $SFMLBuiltDir -ChildPath 'install'
 
 cmake `
     '-DBUILD_SHARED_LIBS=OFF' `
@@ -123,7 +149,7 @@ cmake `
     '-DCMAKE_SYSTEM_VERSION=8.1' `
     '-DSFML_USE_STATIC_STD_LIBS=OFF' `
     '-DSFML_BUILD_NETWORK=OFF' `
-    "-DCMAKE_INSTALL_PREFIX=$SFMLInstallDir" `
+    "-DCMAKE_INSTALL_PREFIX=$SFMLInstallDirStatic" `
     "-DCMAKE_POLICY_VERSION_MINIMUM=3.5" `
     "-G$Generator" `
     "-A$ArchitectureCMake" `
@@ -139,16 +165,19 @@ Pop-Location # Pop SFML
 # STEP 4: Build CSFML #
 # =================== #
 
-Write-Output "Building CSFML using SFML at $SFMLInstallDir"
+
 New-Push CSFML
 
 New-Item -ItemType Directory lib > $null
 $CSFMLLibDir = (Get-Item lib).FullName; # The directory where the final CSFML dlls are located
 
 # Shared
+Write-Output "Building CSFML using SFML Shared at $SFMLInstallDirShared"
+New-Push Shared
+
 cmake `
-    "-DSFML_ROOT=$SFMLInstallDir" `
-    '-DCSFML_LINK_SFML_STATICALLY=ON' `
+    "-DSFML_ROOT=$SFMLInstallDirShared" `
+    '-DCSFML_LINK_SFML_STATICALLY=OFF' `
     `
     "-DCMAKE_LIBRARY_OUTPUT_DIRECTORY=$CSFMLLibDir" `
     "-DCMAKE_LIBRARY_OUTPUT_DIRECTORY_RELEASE=$CSFMLLibDir" `
@@ -175,9 +204,14 @@ Ensure-Success
 cmake --build . --config Release -- '-verbosity:minimal'
 Ensure-Success
 
+Pop-Location # Shared
+
 # Static
+Write-Output "Building CSFML using SFML Static at $SFMLInstallDirStatic"
+New-Push Static
+
 cmake `
-    "-DSFML_ROOT=$SFMLInstallDir" `
+    "-DSFML_ROOT=$SFMLInstallDirStatic" `
     '-DCSFML_LINK_SFML_STATICALLY=ON' `
     "-DCMAKE_LIBRARY_OUTPUT_DIRECTORY=$CSFMLLibDir" `
     "-DCMAKE_LIBRARY_OUTPUT_DIRECTORY_RELEASE=$CSFMLLibDir" `
@@ -197,6 +231,8 @@ Ensure-Success
 
 cmake --build . --config Release -- '-verbosity:minimal'
 Ensure-Success
+
+Pop-Location # Static
 
 # ======================================== #
 # STEP 5: Copy result to the NuGet folders #
@@ -225,6 +261,7 @@ function Copy-Module($module) {
     New-Item -ItemType Directory $OutDirShared -ErrorAction Ignore > $null
     New-Item -ItemType Directory $OutDirStatic -ErrorAction Ignore > $null
 
+    Copy-Item "$SFMLInstallDirShared/bin/sfml-$module-3.dll" "$OutDirShared" -Force > $null
     Copy-Item "$CSFMLLibDir/csfml-$module-3.dll" "$OutDirShared/csfml-$module.dll" -Force > $null
     Copy-Item "$CSFMLLibDir/csfml-$module-s.lib" "$OutDirStatic/csfml-$module-s.lib" -Force > $null
 }

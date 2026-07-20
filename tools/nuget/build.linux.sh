@@ -75,17 +75,36 @@ pushd SFML
 
 SFMLBuiltDir="$(realpath .)" # The directory where SFML was built to. Used later to direct cmake when building CSFML
 
-mkdir -p lib
 # The directory that contains the final SFML libraries
-SFMLLibDir="$(realpath lib)"
+mkdir -p lib
+mkdir -p lib/shared
+mkdir -p lib/static
+SFMLLibDirShared="$(realpath lib/shared)"
+SFMLLibDirStatic="$(realpath lib/static)"
 
+# Shared
 cmake -E env LDFLAGS="-z origin" \
     cmake "${CMAKE_COMPILER_ARGS[@]}" \
-    '-DCMAKE_POSITION_INDEPENDENT_CODE=ON' \
-    '-DBUILD_SHARED_LIBS=OFF' \
+    '-DBUILD_SHARED_LIBS=ON' \
     '-DCMAKE_BUILD_TYPE=Release' \
-    "-DCMAKE_INSTALL_PREFIX=$SFMLLibDir" \
-    "-DCMAKE_LIBRARY_OUTPUT_DIRECTORY=$SFMLLibDir" \
+    "-DCMAKE_INSTALL_PREFIX=$SFMLLibDirShared" \
+    "-DCMAKE_LIBRARY_OUTPUT_DIRECTORY=$SFMLLibDirShared" \
+    '-DCMAKE_BUILD_WITH_INSTALL_RPATH=ON' \
+    '-DCMAKE_INSTALL_RPATH=$ORIGIN' \
+    '-DSFML_USE_SYSTEM_DEPS=OFF' \
+    '-DSFML_BUILD_NETWORK=OFF' \
+    "$SFMLDir"
+
+cmake --build . --config Release --target install
+
+# Static
+cmake -E env LDFLAGS="-z origin" \
+    cmake "${CMAKE_COMPILER_ARGS[@]}" \
+    '-DBUILD_SHARED_LIBS=OFF' \
+    '-DCMAKE_POSITION_INDEPENDENT_CODE=ON' \
+    '-DCMAKE_BUILD_TYPE=Release' \
+    "-DCMAKE_INSTALL_PREFIX=$SFMLLibDirStatic" \
+    "-DCMAKE_LIBRARY_OUTPUT_DIRECTORY=$SFMLLibDirStatic" \
     '-DCMAKE_BUILD_WITH_INSTALL_RPATH=ON' \
     '-DCMAKE_INSTALL_RPATH=$ORIGIN' \
     '-DSFML_USE_SYSTEM_DEPS=OFF' \
@@ -110,9 +129,9 @@ CSFMLLibDir="$(realpath lib)" # The directory that contains the final CSFML libr
 # Shared lib
 cmake -E env LDFLAGS="-z origin" \
     cmake "${CMAKE_COMPILER_ARGS[@]}" \
-    "-DSFML_ROOT=$SFMLLibDir" \
+    "-DSFML_ROOT=$SFMLLibDirShared" \
     '-DBUILD_SHARED_LIBS=ON' \
-    '-DCSFML_LINK_SFML_STATICALLY=ON' \
+    '-DCSFML_LINK_SFML_STATICALLY=OFF' \
     '-DCMAKE_BUILD_TYPE=Release' \
     "-DCMAKE_LIBRARY_OUTPUT_DIRECTORY=$CSFMLLibDir" \
     '-DCMAKE_BUILD_WITH_INSTALL_RPATH=ON' \
@@ -124,7 +143,7 @@ cmake --build . --config Release
 # Static lib
 cmake -E env LDFLAGS="-z origin" \
     cmake "${CMAKE_COMPILER_ARGS[@]}" \
-    "-DSFML_ROOT=$SFMLLibDir" \
+    "-DSFML_ROOT=$SFMLLibDirStatic" \
     '-DBUILD_SHARED_LIBS=OFF' \
     '-DCSFML_LINK_SFML_STATICALLY=ON' \
     '-DCMAKE_BUILD_TYPE=Release' \
@@ -147,6 +166,7 @@ copymodule()
     mkdir -p "$OutDirShared"
     mkdir -p "$OutDirStatic"
 
+    cp "$SFMLLibDirShared/libsfml-$MODULE.so" "$OutDirShared"
     cp "$CSFMLLibDir/libcsfml-$MODULE.so" "$OutDirShared"
     cp "$CSFMLLibDir"/libcsfml-$MODULE*.a "$OutDirStatic"
 }

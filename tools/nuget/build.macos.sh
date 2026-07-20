@@ -59,9 +59,12 @@ pushd SFML
 
 SFMLBuiltDir="$(grealpath .)" # The directory where SFML was built to. Used later to direct cmake when building CSFML
 
-mkdir -p lib
 # The directory that contains the final SFML libraries
-SFMLLibDir="$(grealpath lib)"
+mkdir -p lib
+mkdir -p lib/shared
+mkdir -p lib/static
+SFMLLibDirShared="$(grealpath lib/shared)"
+SFMLLibDirStatic="$(grealpath lib/static)"
 
 if [ $RID == "osx-x64" ]; then
     ARCHITECTURE="x86_64"
@@ -74,19 +77,38 @@ else
     exit 1
 fi
 
+# Shared
 cmake -E env \
     cmake -G "Unix Makefiles" \
-          -D 'CMAKE_POSITION_INDEPENDENT_CODE=ON' \
-          -D 'BUILD_SHARED_LIBS=OFF' \
+          -D 'BUILD_SHARED_LIBS=ON' \
           -D 'SFML_BUILD_FRAMEWORKS=OFF' \
           -D 'CMAKE_BUILD_TYPE=Release' \
           -D "CMAKE_OSX_ARCHITECTURES=$ARCHITECTURE" \
-          -D "CMAKE_LIBRARY_OUTPUT_DIRECTORY=$SFMLLibDir" \
+          -D "CMAKE_LIBRARY_OUTPUT_DIRECTORY=$SFMLLibDirShared" \
           -D 'CMAKE_BUILD_WITH_INSTALL_RPATH=ON' \
           -D 'CMAKE_INSTALL_RPATH=@loader_path' \
-          -D "CMAKE_INSTALL_PREFIX=$SFMLLibDir" \
-          -D "SFML_DEPENDENCIES_INSTALL_PREFIX=$SFMLLibDir" \
-          -D "SFML_MISC_INSTALL_PREFIX=$SFMLLibDir" \
+          -D "CMAKE_INSTALL_PREFIX=$SFMLLibDirShared" \
+          -D "SFML_DEPENDENCIES_INSTALL_PREFIX=$SFMLLibDirShared" \
+          -D "SFML_MISC_INSTALL_PREFIX=$SFMLLibDirShared" \
+          -D "SFML_BUILD_NETWORK=0" \
+          "$SFMLDir"
+
+cmake --build . --config Release --target install
+
+# Static
+cmake -E env \
+    cmake -G "Unix Makefiles" \
+          -D 'BUILD_SHARED_LIBS=ON' \
+          -D 'CMAKE_POSITION_INDEPENDENT_CODE=ON' \
+          -D 'SFML_BUILD_FRAMEWORKS=OFF' \
+          -D 'CMAKE_BUILD_TYPE=Release' \
+          -D "CMAKE_OSX_ARCHITECTURES=$ARCHITECTURE" \
+          -D "CMAKE_LIBRARY_OUTPUT_DIRECTORY=$SFMLLibDirStatic" \
+          -D 'CMAKE_BUILD_WITH_INSTALL_RPATH=ON' \
+          -D 'CMAKE_INSTALL_RPATH=@loader_path' \
+          -D "CMAKE_INSTALL_PREFIX=$SFMLLibDirStatic" \
+          -D "SFML_DEPENDENCIES_INSTALL_PREFIX=$SFMLLibDirStatic" \
+          -D "SFML_MISC_INSTALL_PREFIX=$SFMLLibDirStatic" \
           -D "SFML_BUILD_NETWORK=0" \
           "$SFMLDir"
 
@@ -108,9 +130,9 @@ CSFMLLibDir="$(realpath lib)" # The directory that contains the final CSFML libr
 # Shared
 cmake -E env \
     cmake -G "Unix Makefiles" \
-          -D "SFML_ROOT=$SFMLLibDir" \
+          -D "SFML_ROOT=$SFMLLibDirShared" \
           -D 'BUILD_SHARED_LIBS=ON' \
-          -D 'CSFML_LINK_SFML_STATICALLY=ON' \
+          -D 'CSFML_LINK_SFML_STATICALLY=OFF' \
           -D 'CMAKE_BUILD_TYPE=Release' \
           -D "CMAKE_OSX_ARCHITECTURES=$ARCHITECTURE" \
           -D "CMAKE_LIBRARY_OUTPUT_DIRECTORY=$CSFMLLibDir" \
@@ -125,7 +147,7 @@ cmake --build . --config Release --target install
 # Static
 cmake -E env \
     cmake -G "Unix Makefiles" \
-          -D "SFML_ROOT=$SFMLLibDir" \
+          -D "SFML_ROOT=$SFMLLibDirStatic" \
           -D 'BUILD_SHARED_LIBS=OFF' \
           -D 'CSFML_LINK_SFML_STATICALLY=ON' \
           -D 'CMAKE_BUILD_TYPE=Release' \
@@ -152,6 +174,7 @@ copymodule()
     mkdir -p "$OutDirShared"
     mkdir -p "$OutDirStatic"
 
+    cp "$SFMLLibDirShared/libsfml-$MODULE.dylib" "$OutDirShared"
     cp "$CSFMLLibDir/libcsfml-$MODULE.dylib" "$OutDirShared"
     cp "$CSFMLLibDir"/libcsfml-$MODULE*.a "$OutDirStatic"
 }
