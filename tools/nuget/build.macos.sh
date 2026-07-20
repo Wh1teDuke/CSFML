@@ -4,35 +4,6 @@
 set -e
 set -x
 
-# ========================= #
-# PRELUDE: A note on rpaths #
-# ========================= #
-
-# Unlike Windows, macOS doesn't search the current directory by default when searching for shared libraries (.dylib)
-# It only searches the system default directories (usually /lib and /usr/lib) and the paths in LD_LIBRARY_PATH
-
-# The .NET Runtime will find the CSFML library in its NuGet packages just fine, but that library will then request
-# the OS for libsfml-(module).dylib, and the .NET Runtime will have no say in how that SFML library is found.
-
-# Without SFML installed globally on the system, this will fail, causing the loading of CSFML to fail, causing the
-# .NET Runtime to think the CSFML library doesn't exist or is invalid.
-
-# And so, we need to set the rpath of the CSFML library.
-# The rpath is a special value embedded straight into a library that specifies to the OS a list of folders where
-# other libraries that it references may be found.
-# $ORIGIN, a kind-of environment variable, can be used in rpath to point to the folder where the library currently is.
-# To let the OS know that we intend to use $ORIGIN, we need to add the ORIGIN flag to our ELF with the -z origin
-# gcc linker option
-
-# Since CSFML and SFML will always be deployed on the same folder by NuGet, we just need to add an rpath to CSFML
-# that points to $ORIGIN, causing the OS to search the current folder for SFML, without interference from .NET
-
-# We also add the same rpath to SFML itself for future-proofing, in case we ever decide to ship some Linux SFML
-# dependencies on the Native package.
-
-# You may need to `brew install coreutils` first for grealpath
-# See supported RID at https://docs.microsoft.com/en-us/dotnet/core/rid-catalog
-
 # =================================================== #
 # STEP 1: Setup all variables needed during the build #
 # =================================================== #
@@ -86,8 +57,6 @@ SFMLBuiltDir="$(grealpath .)" # The directory where SFML was built to. Used late
 
 mkdir -p lib
 # The directory that contains the final SFML libraries
-# Since linux libraries don't support static linking from a shared library, this is used to copy the
-# SFML shared libraries together with the CSFML shared libraries into SFML.Net
 SFMLLibDir="$(grealpath lib)"
 
 if [ $RID == "osx-x64" ]; then
@@ -103,7 +72,8 @@ fi
 
 cmake -E env \
     cmake -G "Unix Makefiles" \
-          -D 'BUILD_SHARED_LIBS=ON' \
+          -D 'CMAKE_POSITION_INDEPENDENT_CODE=ON' \
+          -D 'BUILD_SHARED_LIBS=OFF' \
           -D 'SFML_BUILD_FRAMEWORKS=OFF' \
           -D 'CMAKE_BUILD_TYPE=Release' \
           -D "CMAKE_OSX_ARCHITECTURES=$ARCHITECTURE" \
@@ -135,6 +105,7 @@ cmake -E env \
     cmake -G "Unix Makefiles" \
           -D "SFML_ROOT=$SFMLLibDir" \
           -D 'BUILD_SHARED_LIBS=ON' \
+          -D 'CSFML_LINK_SFML_STATICALLY=ON' \
           -D 'CMAKE_BUILD_TYPE=Release' \
           -D "CMAKE_OSX_ARCHITECTURES=$ARCHITECTURE" \
           -D "CMAKE_LIBRARY_OUTPUT_DIRECTORY=$CSFMLLibDir" \
@@ -150,15 +121,12 @@ cmake --build . --config Release --target install
 # STEP 5: Copy result to the NuGet folders #
 # ======================================== #
 
-SFMLMajorMinor="3.1"
-SFMLMajorMinorPatch="$SFMLMajorMinor.0"
 CSFMLMajorMinor="3.1"
 CSFMLMajorMinorPatch="$CSFMLMajorMinor.0"
 
 # Copies one SFML and CSFML module into the NuGet package
 # The module name must be passed to this function as an argument, in lowercase
-# This function then copies $SFMLLibDir/libsfml-(module).so and
-# $CSFMLLibDir/libcsfml-(module).so into $OutDir
+# This function then copies $CSFMLLibDir/libcsfml-(module).so into $OutDir
 copymodule()
 {
     MODULE="$1"
@@ -167,11 +135,6 @@ copymodule()
 
     # SFML.Net only searches for the name with common pre- and suffixes
     # As such we need to ship e.g. libcsfml-graphics.dylib
-    # But the CSFML libs will look for the major.minor version
-    # As such we also need to ship e.g. libcsfml-graphics.3.1.dylib
-    # Unfortunately NuGet package don't support symlinks: https://github.com/NuGet/Home/issues/10734
-    # For SFML, we can just ship one version that CSFML will be looking for
-    cp "$SFMLLibDir/libsfml-$MODULE.$SFMLMajorMinor.dylib" "$OutDir"
     cp "$CSFMLLibDir/libcsfml-$MODULE.dylib" "$OutDir"
     cp "$CSFMLLibDir/libcsfml-$MODULE.$CSFMLMajorMinor.dylib" "$OutDir"
 }

@@ -3,31 +3,6 @@
 # Automatically exit on error
 set -e
 
-# ========================= #
-# PRELUDE: A note on rpaths #
-# ========================= #
-
-# Unlike Windows, Linux doesn't search the current directory by default when searching for shared libraries (.so)
-# It only searches the system default directories (usually /lib and /usr/lib) and the paths in LD_LIBRARY_PATH
-
-# The .NET Runtime will find the CSFML library in its NuGet packages just fine, but that library will then request
-# the OS for libsfml-(module).so, and the .NET Runtime will have no say in how that SFML library is found.
-
-# Without SFML installed globally on the system, this will fail, causing the loading of CSFML to fail, causing the
-# .NET Runtime to think the CSFML library doesn't exist or is invalid.
-
-# And so, we need to set the rpath of the CSFML library.
-# The rpath is a special value embedded straight into a library that specifies to the OS a list of folders where
-# other libraries that it references may be found.
-# $ORIGIN, a kind-of environment variable, can be used in rpath to point to the folder where the library currently is.
-# To let the OS know that we intend to use $ORIGIN, we need to add the ORIGIN flag to our ELF with the -z origin
-# gcc linker option
-
-# Since CSFML and SFML will always be deployed on the same folder by NuGet, we just need to add an rpath to CSFML
-# that points to $ORIGIN, causing the OS to search the current folder for SFML, without interference from .NET
-
-# We also add the same rpath to SFML itself for future-proofing, in case we ever decide to ship some Linux SFML
-# dependencies on the Native package.
 
 # =================================================== #
 # STEP 1: Setup all variables needed during the build #
@@ -98,8 +73,6 @@ SFMLBuiltDir="$(realpath .)" # The directory where SFML was built to. Used later
 
 mkdir -p lib
 # The directory that contains the final SFML libraries
-# Since linux libraries don't support static linking from a shared library, this is used to copy the
-# SFML shared libraries together with the CSFML shared libraries into SFML.Net
 SFMLLibDir="$(realpath lib)"
 
 cmake -E env LDFLAGS="-z origin" \
@@ -147,13 +120,11 @@ cmake --build . --config Release
 # STEP 5: Copy result to the NuGet folders #
 # ======================================== #
 
-SFMLMajorMinor="3.1"
 CSFMLMajorMinor="3.1"
 
 # Copies one SFML and CSFML module into the NuGet package
 # The module name must be passed to this function as an argument, in lowercase
-# This function then copies $SFMLLibDir/libsfml-(module).so and
-# $CSFMLLibDir/libcsfml-(module).so into $OutDir
+# This function then copies $CSFMLLibDir/libcsfml-(module).so into $OutDir
 copymodule()
 {
     MODULE="$1"
