@@ -145,6 +145,7 @@ cmake -E env LDFLAGS="-z origin" \
     cmake "${CMAKE_COMPILER_ARGS[@]}" \
     "-DSFML_ROOT=$SFMLLibDirStatic" \
     '-DBUILD_SHARED_LIBS=OFF' \
+    '-DSFML_STATIC_LIBRARIES=ON' \
     '-DCSFML_LINK_SFML_STATICALLY=ON' \
     '-DCMAKE_BUILD_TYPE=Release' \
     "-DCMAKE_LIBRARY_OUTPUT_DIRECTORY=$CSFMLLibDir" \

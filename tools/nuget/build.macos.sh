@@ -98,7 +98,7 @@ cmake --build . --config Release --target install
 # Static
 cmake -E env \
     cmake -G "Unix Makefiles" \
-          -D 'BUILD_SHARED_LIBS=ON' \
+          -D 'BUILD_SHARED_LIBS=OFF' \
           -D 'CMAKE_POSITION_INDEPENDENT_CODE=ON' \
           -D 'SFML_BUILD_FRAMEWORKS=OFF' \
           -D 'CMAKE_BUILD_TYPE=Release' \
@@ -149,6 +149,7 @@ cmake -E env \
     cmake -G "Unix Makefiles" \
           -D "SFML_ROOT=$SFMLLibDirStatic" \
           -D 'BUILD_SHARED_LIBS=OFF' \
+          -D 'SFML_STATIC_LIBRARIES=ON' \
           -D 'CSFML_LINK_SFML_STATICALLY=ON' \
           -D 'CMAKE_BUILD_TYPE=Release' \
           -D "CMAKE_OSX_ARCHITECTURES=$ARCHITECTURE" \
