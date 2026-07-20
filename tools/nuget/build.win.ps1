@@ -195,7 +195,6 @@ function Copy-Module($module) {
     Write-Output "Copying SFML & CSFML $module"
 
     New-Item -ItemType Directory $OutDir -ErrorAction Ignore > $null
-    Copy-Item "$SFMLInstallDir/bin/sfml-$module-3.dll" "$OutDir" -Force > $null
     Copy-Item "$CSFMLLibDir/csfml-$module-3.dll" "$OutDir/csfml-$module.dll" -Force > $null
 }
 
