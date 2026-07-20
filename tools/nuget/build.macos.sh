@@ -136,7 +136,6 @@ copymodule()
     # SFML.Net only searches for the name with common pre- and suffixes
     # As such we need to ship e.g. libcsfml-graphics.dylib
     cp "$CSFMLLibDir/libcsfml-$MODULE.dylib" "$OutDir"
-    cp "$CSFMLLibDir/libcsfml-$MODULE.$CSFMLMajorMinor.dylib" "$OutDir"
 }
 
 copymodule audio
