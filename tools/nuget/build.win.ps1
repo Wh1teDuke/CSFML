@@ -114,7 +114,7 @@ $SFMLInstallDir = Join-Path -Path $SFMLBuiltDir -ChildPath 'install'
 
 cmake `
     '-DBUILD_SHARED_LIBS=OFF' `
-    '-DCMAKE_POSITION_INDEPENDENT_CODE=ON' \
+    '-DCMAKE_POSITION_INDEPENDENT_CODE=ON' `
     '-DCMAKE_BUILD_TYPE=Release' `
     '-DCMAKE_SYSTEM_VERSION=8.1' `
     '-DSFML_USE_STATIC_STD_LIBS=OFF' `
