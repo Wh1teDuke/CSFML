@@ -127,6 +127,8 @@ mkdir -p lib
 CSFMLLibDir="$(realpath lib)" # The directory that contains the final CSFML libraries. Used to copy the result into SFML.Net
 
 # Shared lib
+mkdir -p build-shared
+pushd build-shared
 cmake -E env LDFLAGS="-z origin" \
     cmake "${CMAKE_COMPILER_ARGS[@]}" \
     "-DSFML_ROOT=$SFMLLibDirShared" \
@@ -139,8 +141,11 @@ cmake -E env LDFLAGS="-z origin" \
     '-DCSFML_BUILD_NETWORK=OFF' \
     "$CSFMLDir"
 cmake --build . --config Release
+popd # Pop build-shared
 
 # Static lib
+mkdir -p build-static
+pushd build-static
 cmake -E env LDFLAGS="-z origin" \
     cmake "${CMAKE_COMPILER_ARGS[@]}" \
     "-DSFML_ROOT=$SFMLLibDirStatic" \
@@ -155,6 +160,7 @@ cmake -E env LDFLAGS="-z origin" \
     '-DCSFML_BUILD_NETWORK=OFF' \
     "$CSFMLDir"
 cmake --build . --config Release
+popd # Pop build-static
 
 # ======================================== #
 # STEP 5: Copy result to the NuGet folders #
