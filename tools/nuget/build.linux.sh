@@ -166,6 +166,9 @@ popd # Pop build-static
 # STEP 5: Copy result to the NuGet folders #
 # ======================================== #
 
+SFMLMajorMinor="3.1"
+CSFMLMajorMinor="3.1"
+
 copymodule()
 {
     MODULE="$1"
@@ -173,8 +176,10 @@ copymodule()
     mkdir -p "$OutDirShared"
     mkdir -p "$OutDirStatic"
 
-    cp "$SFMLLibDirShared/libsfml-$MODULE.so" "$OutDirShared"
+    cp "$SFMLLibDirShared/libsfml-$MODULE.so.$SFMLMajorMinor" "$OutDirShared"
     cp "$CSFMLLibDir/libcsfml-$MODULE.so" "$OutDirShared"
+    cp "$CSFMLLibDir/libcsfml-$MODULE.so.$CSFMLMajorMinor" "$OutDirShared"
+
     cp "$CSFMLLibDir"/libcsfml-$MODULE*.a "$OutDirStatic"
 }
 
