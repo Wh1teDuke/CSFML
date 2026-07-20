@@ -104,7 +104,7 @@ SFMLLibDir="$(realpath lib)"
 
 cmake -E env LDFLAGS="-z origin" \
     cmake "${CMAKE_COMPILER_ARGS[@]}" \
-    '-DBUILD_SHARED_LIBS=ON' \
+    '-DBUILD_SHARED_LIBS=OFF' \
     '-DCMAKE_BUILD_TYPE=Release' \
     "-DCMAKE_INSTALL_PREFIX=$SFMLLibDir" \
     "-DCMAKE_LIBRARY_OUTPUT_DIRECTORY=$SFMLLibDir" \
@@ -133,6 +133,7 @@ cmake -E env LDFLAGS="-z origin" \
     cmake "${CMAKE_COMPILER_ARGS[@]}" \
     "-DSFML_ROOT=$SFMLLibDir" \
     '-DBUILD_SHARED_LIBS=ON' \
+    '-DCSFML_LINK_SFML_STATICALLY=ON' \
     '-DCMAKE_BUILD_TYPE=Release' \
     "-DCMAKE_LIBRARY_OUTPUT_DIRECTORY=$CSFMLLibDir" \
     '-DCMAKE_BUILD_WITH_INSTALL_RPATH=ON' \
@@ -160,11 +161,6 @@ copymodule()
 
     # SFML.Net only searches for the name with common pre- and suffixes
     # As such we need to ship e.g. libcsfml-graphics.so
-    # But the CSFML libs will look for the major.minor version
-    # As such we also need to ship e.g. libcsfml-graphics.so.3.1
-    # Unfortunately NuGet package don't support symlinks: https://github.com/NuGet/Home/issues/10734
-    # For SFML, we can just ship one version that CSFML will be looking for
-    cp "$SFMLLibDir/libsfml-$MODULE.so.$SFMLMajorMinor" "$OutDir"
     cp "$CSFMLLibDir/libcsfml-$MODULE.so" "$OutDir"
     cp "$CSFMLLibDir/libcsfml-$MODULE.so.$CSFMLMajorMinor" "$OutDir"
 }
