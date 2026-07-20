@@ -26,7 +26,7 @@ OutDirShared="$(grealpath "$OutDirShared")"
 
 OutDirStatic="./CSFML/libs/$RID/static"
 mkdir -p "$OutDirStatic"
-OutDirStatic="$(realpath "$OutDirStatic")"
+OutDirStatic="$(grealpath "$OutDirStatic")"
 
 echo "Building $RID"
 
