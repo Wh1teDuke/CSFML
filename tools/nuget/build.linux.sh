@@ -36,13 +36,9 @@ fi
 SFMLBranch="3.1.0" # The branch or tag of the SFML repository to be cloned
 CSFMLDir="$(realpath ../../)"  # The directory of the source code of CSFML
 
-OutDirShared="./CSFML/runtimes/$RID/native" # The base directory of all CSFML modules, used to copy the final libraries
-mkdir -p "$OutDirShared"
-OutDirShared="$(realpath "$OutDirShared")"
-
-OutDirStatic="./CSFML/libs/$RID/static"
-mkdir -p "$OutDirStatic"
-OutDirStatic="$(realpath "$OutDirStatic")"
+OutDir="./CSFML/runtimes/$RID/native" # The base directory of all CSFML modules, used to copy the final libraries
+mkdir -p "$OutDir"
+OutDir="$(realpath "$OutDir")"
 
 echo "Building $RID"
 
@@ -78,33 +74,15 @@ SFMLBuiltDir="$(realpath .)" # The directory where SFML was built to. Used later
 # The directory that contains the final SFML libraries
 mkdir -p lib
 mkdir -p lib/shared
-mkdir -p lib/static
-SFMLLibDirShared="$(realpath lib/shared)"
-SFMLLibDirStatic="$(realpath lib/static)"
+SFMLLibDir="$(realpath lib/shared)"
 
 # Shared
 cmake -E env LDFLAGS="-z origin" \
     cmake "${CMAKE_COMPILER_ARGS[@]}" \
     '-DBUILD_SHARED_LIBS=ON' \
     '-DCMAKE_BUILD_TYPE=Release' \
-    "-DCMAKE_INSTALL_PREFIX=$SFMLLibDirShared" \
-    "-DCMAKE_LIBRARY_OUTPUT_DIRECTORY=$SFMLLibDirShared" \
-    '-DCMAKE_BUILD_WITH_INSTALL_RPATH=ON' \
-    '-DCMAKE_INSTALL_RPATH=$ORIGIN' \
-    '-DSFML_USE_SYSTEM_DEPS=OFF' \
-    '-DSFML_BUILD_NETWORK=OFF' \
-    "$SFMLDir"
-
-cmake --build . --config Release --target install
-
-# Static
-cmake -E env LDFLAGS="-z origin" \
-    cmake "${CMAKE_COMPILER_ARGS[@]}" \
-    '-DBUILD_SHARED_LIBS=OFF' \
-    '-DCMAKE_POSITION_INDEPENDENT_CODE=ON' \
-    '-DCMAKE_BUILD_TYPE=Release' \
-    "-DCMAKE_INSTALL_PREFIX=$SFMLLibDirStatic" \
-    "-DCMAKE_LIBRARY_OUTPUT_DIRECTORY=$SFMLLibDirStatic" \
+    "-DCMAKE_INSTALL_PREFIX=$SFMLLibDir" \
+    "-DCMAKE_LIBRARY_OUTPUT_DIRECTORY=$SFMLLibDir" \
     '-DCMAKE_BUILD_WITH_INSTALL_RPATH=ON' \
     '-DCMAKE_INSTALL_RPATH=$ORIGIN' \
     '-DSFML_USE_SYSTEM_DEPS=OFF' \
@@ -131,7 +109,7 @@ mkdir -p build-shared
 pushd build-shared
 cmake -E env LDFLAGS="-z origin" \
     cmake "${CMAKE_COMPILER_ARGS[@]}" \
-    "-DSFML_ROOT=$SFMLLibDirShared" \
+    "-DSFML_ROOT=$SFMLLibDir" \
     '-DBUILD_SHARED_LIBS=ON' \
     '-DCSFML_LINK_SFML_STATICALLY=OFF' \
     '-DCMAKE_BUILD_TYPE=Release' \
@@ -142,25 +120,6 @@ cmake -E env LDFLAGS="-z origin" \
     "$CSFMLDir"
 cmake --build . --config Release
 popd # Pop build-shared
-
-# Static lib
-mkdir -p build-static
-pushd build-static
-cmake -E env LDFLAGS="-z origin" \
-    cmake "${CMAKE_COMPILER_ARGS[@]}" \
-    "-DSFML_ROOT=$SFMLLibDirStatic" \
-    '-DBUILD_SHARED_LIBS=OFF' \
-    '-DSFML_STATIC_LIBRARIES=ON' \
-    '-DCSFML_LINK_SFML_STATICALLY=ON' \
-    '-DCMAKE_BUILD_TYPE=Release' \
-    "-DCMAKE_LIBRARY_OUTPUT_DIRECTORY=$CSFMLLibDir" \
-    "-DCMAKE_ARCHIVE_OUTPUT_DIRECTORY=$CSFMLLibDir" \
-    '-DCMAKE_BUILD_WITH_INSTALL_RPATH=ON' \
-    '-DCMAKE_INSTALL_RPATH=$ORIGIN' \
-    '-DCSFML_BUILD_NETWORK=OFF' \
-    "$CSFMLDir"
-cmake --build . --config Release
-popd # Pop build-static
 
 # ======================================== #
 # STEP 5: Copy result to the NuGet folders #
@@ -173,14 +132,11 @@ copymodule()
 {
     MODULE="$1"
 
-    mkdir -p "$OutDirShared"
-    mkdir -p "$OutDirStatic"
+    mkdir -p "$OutDir"
 
-    cp "$SFMLLibDirShared/libsfml-$MODULE.so.$SFMLMajorMinor" "$OutDirShared"
-    cp "$CSFMLLibDir/libcsfml-$MODULE.so" "$OutDirShared"
-    cp "$CSFMLLibDir/libcsfml-$MODULE.so.$CSFMLMajorMinor" "$OutDirShared"
-
-    cp "$CSFMLLibDir"/libcsfml-$MODULE*.a "$OutDirStatic"
+    cp "$SFMLLibDir/libsfml-$MODULE.so.$SFMLMajorMinor" "$OutDir"
+    cp "$CSFMLLibDir/libcsfml-$MODULE.so" "$OutDir"
+    cp "$CSFMLLibDir/libcsfml-$MODULE.so.$CSFMLMajorMinor" "$OutDir"
 }
 
 copymodule audio

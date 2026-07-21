@@ -20,13 +20,9 @@ RID="$1"
 SFMLBranch="3.1.0" # The branch or tag of the SFML repository to be cloned
 CSFMLDir="$(grealpath "$(git rev-parse --show-toplevel)")" # The directory of the source code of CSFML
 
-OutDirShared="./CSFML/runtimes/$RID/native" # The base directory of all CSFML modules, used to copy the final libraries
-mkdir -p "$OutDirShared"
-OutDirShared="$(grealpath "$OutDirShared")"
-
-OutDirStatic="./CSFML/libs/$RID/static"
-mkdir -p "$OutDirStatic"
-OutDirStatic="$(grealpath "$OutDirStatic")"
+OutDir="./CSFML/runtimes/$RID/native" # The base directory of all CSFML modules, used to copy the final libraries
+mkdir -p "$OutDir"
+OutDir="$(grealpath "$OutDir")"
 
 echo "Building $RID"
 
@@ -62,9 +58,7 @@ SFMLBuiltDir="$(grealpath .)" # The directory where SFML was built to. Used late
 # The directory that contains the final SFML libraries
 mkdir -p lib
 mkdir -p lib/shared
-mkdir -p lib/static
-SFMLLibDirShared="$(grealpath lib/shared)"
-SFMLLibDirStatic="$(grealpath lib/static)"
+SFMLLibDir="$(grealpath lib/shared)"
 
 if [ $RID == "osx-x64" ]; then
     ARCHITECTURE="x86_64"
@@ -84,31 +78,12 @@ cmake -E env \
           -D 'SFML_BUILD_FRAMEWORKS=OFF' \
           -D 'CMAKE_BUILD_TYPE=Release' \
           -D "CMAKE_OSX_ARCHITECTURES=$ARCHITECTURE" \
-          -D "CMAKE_LIBRARY_OUTPUT_DIRECTORY=$SFMLLibDirShared" \
+          -D "CMAKE_LIBRARY_OUTPUT_DIRECTORY=$SFMLLibDir" \
           -D 'CMAKE_BUILD_WITH_INSTALL_RPATH=ON' \
           -D 'CMAKE_INSTALL_RPATH=@loader_path' \
-          -D "CMAKE_INSTALL_PREFIX=$SFMLLibDirShared" \
-          -D "SFML_DEPENDENCIES_INSTALL_PREFIX=$SFMLLibDirShared" \
-          -D "SFML_MISC_INSTALL_PREFIX=$SFMLLibDirShared" \
-          -D "SFML_BUILD_NETWORK=0" \
-          "$SFMLDir"
-
-cmake --build . --config Release --target install
-
-# Static
-cmake -E env \
-    cmake -G "Unix Makefiles" \
-          -D 'BUILD_SHARED_LIBS=OFF' \
-          -D 'CMAKE_POSITION_INDEPENDENT_CODE=ON' \
-          -D 'SFML_BUILD_FRAMEWORKS=OFF' \
-          -D 'CMAKE_BUILD_TYPE=Release' \
-          -D "CMAKE_OSX_ARCHITECTURES=$ARCHITECTURE" \
-          -D "CMAKE_LIBRARY_OUTPUT_DIRECTORY=$SFMLLibDirStatic" \
-          -D 'CMAKE_BUILD_WITH_INSTALL_RPATH=ON' \
-          -D 'CMAKE_INSTALL_RPATH=@loader_path' \
-          -D "CMAKE_INSTALL_PREFIX=$SFMLLibDirStatic" \
-          -D "SFML_DEPENDENCIES_INSTALL_PREFIX=$SFMLLibDirStatic" \
-          -D "SFML_MISC_INSTALL_PREFIX=$SFMLLibDirStatic" \
+          -D "CMAKE_INSTALL_PREFIX=$SFMLLibDir" \
+          -D "SFML_DEPENDENCIES_INSTALL_PREFIX=$SFMLLibDir" \
+          -D "SFML_MISC_INSTALL_PREFIX=$SFMLLibDir" \
           -D "SFML_BUILD_NETWORK=0" \
           "$SFMLDir"
 
@@ -132,7 +107,7 @@ mkdir -p build-shared
 pushd build-shared
 cmake -E env \
     cmake -G "Unix Makefiles" \
-          -D "SFML_ROOT=$SFMLLibDirShared" \
+          -D "SFML_ROOT=$SFMLLibDir" \
           -D 'BUILD_SHARED_LIBS=ON' \
           -D 'CSFML_LINK_SFML_STATICALLY=OFF' \
           -D 'CMAKE_BUILD_TYPE=Release' \
@@ -147,28 +122,6 @@ cmake -E env \
 cmake --build . --config Release --target install
 popd # Pop build-shared
 
-# Static
-mkdir -p build-static
-pushd build-static
-cmake -E env \
-    cmake -G "Unix Makefiles" \
-          -D "SFML_ROOT=$SFMLLibDirStatic" \
-          -D 'BUILD_SHARED_LIBS=OFF' \
-          -D 'SFML_STATIC_LIBRARIES=ON' \
-          -D 'CSFML_LINK_SFML_STATICALLY=ON' \
-          -D 'CMAKE_BUILD_TYPE=Release' \
-          -D "CMAKE_OSX_ARCHITECTURES=$ARCHITECTURE" \
-          -D "CMAKE_LIBRARY_OUTPUT_DIRECTORY=$CSFMLLibDir" \
-          -D "CMAKE_ARCHIVE_OUTPUT_DIRECTORY=$CSFMLLibDir" \
-          -D 'CMAKE_BUILD_WITH_INSTALL_RPATH=ON' \
-          -D 'CMAKE_INSTALL_RPATH=@loader_path' \
-          -D "CMAKE_INSTALL_PREFIX=$CSFMLLibDir" \
-          -D "INSTALL_MISC_DIR=$CSFMLLibDir" \
-          -D "CSFML_BUILD_NETWORK=0" \
-          "$CSFMLDir"
-cmake --build . --config Release --target install
-popd # Pop build-static
-
 # ======================================== #
 # STEP 5: Copy result to the NuGet folders #
 # ======================================== #
@@ -182,14 +135,11 @@ copymodule()
 {
     MODULE="$1"
 
-    mkdir -p "$OutDirShared"
-    mkdir -p "$OutDirStatic"
+    mkdir -p "$OutDir"
 
-    cp "$SFMLLibDirShared/libsfml-$MODULE.$SFMLMajorMinor.dylib" "$OutDirShared"
-    cp "$CSFMLLibDir/libcsfml-$MODULE.dylib" "$OutDirShared"
-    cp "$CSFMLLibDir/libcsfml-$MODULE.$CSFMLMajorMinor.dylib" "$OutDirShared"
-
-    cp "$CSFMLLibDir"/libcsfml-$MODULE*.a "$OutDirStatic"
+    cp "$SFMLLibDir/libsfml-$MODULE.$SFMLMajorMinor.dylib" "$OutDir"
+    cp "$CSFMLLibDir/libcsfml-$MODULE.dylib" "$OutDir"
+    cp "$CSFMLLibDir/libcsfml-$MODULE.$CSFMLMajorMinor.dylib" "$OutDir"
 }
 
 copymodule audio
